@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # 1. MongoDB Database Service configured with Replica Set 'rs0' for ACID Transactions
+  mongo:
+    image: mongo:7.0
+    container_name: train_mongo
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Replica Set Initializer Service
+  mongo-init:
+    image: mongo:7.0
+    container_name: train_mongo_init
+    depends_on:
+      mongo:
+        condition: service_healthy
+    command: >
+      mongosh --host mongo:27017 --eval "
+        try {
+          rs.status();
+          console.log('Replica set already initialized');
+        } catch (e) {
+          rs.initiate({
+            _id: 'rs0',
+            members: [{ _id: 0, host: 'mongo:27017' }]
+          });
+          console.log('Replica set rs0 initialized successfully');
+        }
+      "
+
+  # 3. Node.js Express Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: train_backend
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+      - MONGO_URI=mongodb://mongo:27017/train_booking?replicaSet=rs0
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully
+
+  # 4. React Vite Frontend Service (Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: train_frontend
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_API_URL=http://backend:5001
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:
