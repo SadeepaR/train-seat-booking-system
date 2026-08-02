@@ -185,40 +185,12 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Station Passenger Flow & Recent Bookings */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Station Boarding Flow */}
-        <div className="glass-panel rounded-2xl p-5 border border-slate-800 space-y-3 lg:col-span-1">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <span>Station Passenger Activity</span>
-          </h3>
-          <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-            {stationOccupancy.map((st: any) => (
-              <div
-                key={st.sequence}
-                className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 text-xs border border-slate-800/60"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-slate-800 text-slate-400 text-[10px] font-bold flex items-center justify-center">
-                    {st.sequence}
-                  </span>
-                  <span className="font-semibold text-slate-200">{st.stationName}</span>
-                </div>
-                <div className="flex items-center gap-3 text-[11px]">
-                  <span className="text-emerald-400 font-medium">+{st.boardingCount} on</span>
-                  <span className="text-rose-400 font-medium">-{st.alightingCount} off</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Reservations Table */}
-        <div className="glass-panel rounded-2xl p-5 border border-slate-800 space-y-3 lg:col-span-2">
-          <h3 className="text-sm font-bold text-white flex items-center justify-between">
-            <span>Recent Confirmed Tickets</span>
-            <span className="text-xs text-slate-400 font-normal">Last 10 reservations</span>
-          </h3>
+      {/* Recent Reservations Table */}
+      <div className="glass-panel rounded-2xl p-5 border border-slate-800 space-y-3">
+        <h3 className="text-sm font-bold text-white flex items-center justify-between">
+          <span>Recent Confirmed Tickets</span>
+          <span className="text-xs text-slate-400 font-normal">Last 10 reservations</span>
+        </h3>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-slate-300">
@@ -264,7 +236,6 @@ export const AdminDashboard: React.FC = () => {
             </table>
           </div>
         </div>
-      </div>
     </div>
   );
 };
