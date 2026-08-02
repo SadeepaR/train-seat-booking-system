@@ -1,43 +1,25 @@
 version: '3.8'
 
 services:
-  # 1. MongoDB Database Service configured with Replica Set 'rs0' for ACID Transactions
-  mongo:
-    image: mongo:7.0
-    container_name: train_mongo
-    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+  # 1. PostgreSQL Database Service configured with btree_gist extension for Range Exclusion Constraints
+  postgres:
+    image: postgres:16-alpine
+    container_name: train_postgres
+    environment:
+      - POSTGRES_DB=train_booking
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
     ports:
-      - "27017:27017"
+      - "5432:5432"
     volumes:
-      - mongo_data:/data/db
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d train_booking"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  # 2. Replica Set Initializer Service
-  mongo-init:
-    image: mongo:7.0
-    container_name: train_mongo_init
-    depends_on:
-      mongo:
-        condition: service_healthy
-    command: >
-      mongosh --host mongo:27017 --eval "
-        try {
-          rs.status();
-          console.log('Replica set already initialized');
-        } catch (e) {
-          rs.initiate({
-            _id: 'rs0',
-            members: [{ _id: 0, host: 'mongo:27017' }]
-          });
-          console.log('Replica set rs0 initialized successfully');
-        }
-      "
-
-  # 3. Node.js Express Backend Service
+  # 2. Node.js Express Backend Service
   backend:
     build:
       context: ./backend
@@ -47,12 +29,12 @@ services:
       - "5001:5001"
     environment:
       - PORT=5001
-      - MONGO_URI=mongodb://mongo:27017/train_booking?replicaSet=rs0
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/train_booking
     depends_on:
-      mongo-init:
-        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
 
-  # 4. React Vite Frontend Service (Nginx)
+  # 3. React Vite Frontend Service (Nginx)
   frontend:
     build:
       context: ./frontend
@@ -66,4 +48,4 @@ services:
       - backend
 
 volumes:
-  mongo_data:
+  postgres_data:

@@ -1,7 +1,5 @@
-import { Types } from 'mongoose';
-
 export interface IStation {
-  _id?: Types.ObjectId;
+  id: number | string;
   name: string;
   code: string;
   sequence: number;
@@ -15,7 +13,7 @@ export enum CoachClass {
 }
 
 export interface ICoach {
-  _id?: Types.ObjectId;
+  id: number | string;
   name: string;
   classType: CoachClass;
   totalSeats: number;
@@ -24,15 +22,15 @@ export interface ICoach {
 }
 
 export interface ISeat {
-  _id?: Types.ObjectId;
-  coachId: Types.ObjectId;
-  seatNumber: string; // e.g. "1A", "1B"
+  id: number | string;
+  coachId: number | string;
+  seatNumber: string;
   row: number;
   column: number;
 }
 
 export interface ITrainStationRoute {
-  stationId: Types.ObjectId;
+  stationId: number | string;
   name: string;
   code: string;
   sequence: number;
@@ -42,7 +40,7 @@ export interface ITrainStationRoute {
 }
 
 export interface ITrain {
-  _id?: Types.ObjectId;
+  id: number | string;
   trainNumber: string;
   name: string;
   stations: ITrainStationRoute[];
@@ -54,25 +52,24 @@ export enum BookingStatus {
 }
 
 export interface IBooking {
-  _id?: Types.ObjectId;
-  trainId: Types.ObjectId;
-  seatId: Types.ObjectId;
+  id: number | string;
+  trainId: number | string;
+  seatId: number | string;
   passengerName: string;
   passengerEmail: string;
-  originStationId: Types.ObjectId;
-  destinationStationId: Types.ObjectId;
+  originStationId: number | string;
+  destinationStationId: number | string;
   originStationName: string;
   destinationStationName: string;
-  fromSequence: number; // Inclusive start index
-  toSequence: number;   // Exclusive end index
+  fromSequence: number;
+  toSequence: number;
   distanceKm: number;
   fareAmount: number;
   status: BookingStatus;
   createdAt?: Date;
-  updatedAt?: Date;
 }
 
-// Seat availability response DTO
+// Seat availability DTO
 export interface ISeatAvailabilityDTO {
   seatId: string;
   seatNumber: string;

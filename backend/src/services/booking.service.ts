@@ -1,33 +1,18 @@
-import mongoose from 'mongoose';
-import { Booking } from '../models/Booking';
-import { Train } from '../models/Train';
-import { Seat } from '../models/Seat';
-import { BookingStatus } from '../types';
+import { pool } from '../config/db';
+import { BookingStatus, CoachClass } from '../types';
 import { isValidJourneySegment } from '../utils/segment';
 import { calculateDistanceAndFare } from '../utils/fare';
 import { BookingConflictError, ValidationError } from '../utils/errors';
 
 export interface ICreateBookingInput {
-  trainId: string;
-  seatId: string;
+  trainId: string | number;
+  seatId: string | number;
   passengerName: string;
   passengerEmail: string;
-  originStationId: string;
-  destinationStationId: string;
+  originStationId: string | number;
+  destinationStationId: string | number;
 }
 
-/**
- * Creates a train seat booking with ACID transaction concurrency protection.
- * 
- * Double Booking Prevention Mechanism:
- * 1. Opens a MongoDB Session transaction.
- * 2. Fetches current train route and verifies station sequences.
- * 3. Inside the transaction, queries active CONFIRMED bookings for (trainId, seatId)
- *    where requested segment [fromSeq, toSeq) overlaps existing bookings.
- * 4. If any overlapping booking is found, the transaction is aborted and a
- *    409 Conflict exception is raised.
- * 5. If available, writes the new Booking document and commits the transaction.
- */
 export const createBooking = async (input: ICreateBookingInput) => {
   const { trainId, seatId, passengerName, passengerEmail, originStationId, destinationStationId } = input;
 
@@ -35,20 +20,32 @@ export const createBooking = async (input: ICreateBookingInput) => {
     throw new ValidationError('Passenger name and email are required');
   }
 
-  // 1. Verify train and seat existence
-  const train = await Train.findById(trainId);
-  if (!train) {
+  // 1. Fetch train and seat
+  const trainRes = await pool.query(`SELECT * FROM trains WHERE id = $1`, [trainId]);
+  if (trainRes.rows.length === 0) {
     throw new ValidationError('Train schedule not found');
   }
+  const train = trainRes.rows[0];
 
-  const seat = await Seat.findById(seatId).populate('coachId');
-  if (!seat) {
+  const seatRes = await pool.query(`
+    SELECT s.*, c.class_type, c.name as coach_name 
+    FROM seats s 
+    JOIN coaches c ON s.coach_id = c.id 
+    WHERE s.id = $1
+  `, [seatId]);
+  
+  if (seatRes.rows.length === 0) {
     throw new ValidationError('Seat not found');
   }
+  const seat = seatRes.rows[0];
 
   // 2. Identify station sequences in route
-  const originRoute = train.stations.find((st) => st.stationId.toString() === originStationId);
-  const destRoute = train.stations.find((st) => st.stationId.toString() === destinationStationId);
+  const stationsRoute: any[] = typeof train.route_stations === 'string'
+    ? JSON.parse(train.route_stations)
+    : train.route_stations;
+
+  const originRoute = stationsRoute.find((st: any) => st.stationId.toString() === originStationId.toString());
+  const destRoute = stationsRoute.find((st: any) => st.stationId.toString() === destinationStationId.toString());
 
   if (!originRoute || !destRoute) {
     throw new ValidationError('Origin or Destination station not found on train route');
@@ -63,103 +60,97 @@ export const createBooking = async (input: ICreateBookingInput) => {
     );
   }
 
-  // 3. Attempt ACID Transaction with fallback if MongoDB is not running as replica set
-  let session: mongoose.ClientSession | null = null;
-  let useTransaction = true;
+  // 3. Compute distance and fare
+  const classType = (seat.class_type || CoachClass.THIRD) as CoachClass;
+  const originKm = originRoute.distanceFromOriginKm || 0;
+  const destKm = destRoute.distanceFromOriginKm || 0;
+  const { distanceKm, fareAmount } = calculateDistanceAndFare(originKm, destKm, classType);
 
+  // 4. Attempt SQL Insert - Database engine enforces exclusion constraint
   try {
-    session = await mongoose.startSession();
-    session.startTransaction();
-  } catch (err) {
-    // If standalone MongoDB instance (no replica set), fallback to atomic operation logic
-    console.warn('[BookingService] Transactions not supported on single standalone Mongo node, proceeding without session transaction.');
-    useTransaction = false;
-    session = null;
-  }
+    const insertQuery = `
+      INSERT INTO bookings (
+        train_id, seat_id, passenger_name, passenger_email,
+        origin_station_id, destination_station_id, origin_station_name, destination_station_name,
+        from_sequence, to_sequence, distance_km, fare_amount, status
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      RETURNING *
+    `;
 
-  try {
-    // Overlap query inside transaction:
-    // Finds any confirmed booking on same seat & train where:
-    // existing.fromSequence < new.toSequence AND existing.toSequence > new.fromSequence
-    const query = Booking.find({
-      trainId: train._id,
-      seatId: seat._id,
-      status: BookingStatus.CONFIRMED,
-      $and: [
-        { fromSequence: { $lt: toSequence } },
-        { toSequence: { $gt: fromSequence } },
-      ],
-    });
+    const res = await pool.query(insertQuery, [
+      train.id,
+      seat.id,
+      passengerName.trim(),
+      passengerEmail.trim(),
+      originRoute.stationId,
+      destRoute.stationId,
+      originRoute.name,
+      destRoute.name,
+      fromSequence,
+      toSequence,
+      distanceKm,
+      fareAmount,
+      BookingStatus.CONFIRMED,
+    ]);
 
-    if (useTransaction && session) {
-      query.session(session);
-    }
-
-    const existingOverlaps = await query.exec();
-
-    if (existingOverlaps.length > 0) {
-      const conflict = existingOverlaps[0];
+    const b = res.rows[0];
+    return {
+      _id: b.id.toString(),
+      trainId: b.train_id.toString(),
+      seatId: { _id: b.seat_id.toString(), seatNumber: seat.seat_number },
+      passengerName: b.passenger_name,
+      passengerEmail: b.passenger_email,
+      originStationName: b.origin_station_name,
+      destinationStationName: b.destination_station_name,
+      fromSequence: b.from_sequence,
+      toSequence: b.to_sequence,
+      distanceKm: b.distance_km,
+      fareAmount: b.fare_amount,
+      status: b.status,
+      createdAt: b.created_at,
+    };
+  } catch (error: any) {
+    // Catch PostgreSQL code 23P01 (exclusion_violation)
+    if (error.code === '23P01') {
       throw new BookingConflictError(
-        `Seat ${seat.seatNumber} is already booked for an overlapping segment (${conflict.originStationName} to ${conflict.destinationStationName}).`,
-        conflict
+        `Seat ${seat.seat_number} is already booked for an overlapping segment on this train.`
       );
     }
-
-    const coachObj: any = seat.coachId;
-    const classType = coachObj && coachObj.classType ? coachObj.classType : 'THIRD';
-    const originKm = originRoute.distanceFromOriginKm || 0;
-    const destKm = destRoute.distanceFromOriginKm || 0;
-    const { distanceKm, fareAmount } = calculateDistanceAndFare(originKm, destKm, classType);
-
-    // No overlap found -> Create booking document
-    const newBookingDocs = await Booking.create(
-      [
-        {
-          trainId: train._id,
-          seatId: seat._id,
-          passengerName,
-          passengerEmail,
-          originStationId: originRoute.stationId,
-          destinationStationId: destRoute.stationId,
-          originStationName: originRoute.name,
-          destinationStationName: destRoute.name,
-          fromSequence,
-          toSequence,
-          distanceKm,
-          fareAmount,
-          status: BookingStatus.CONFIRMED,
-        },
-      ],
-      useTransaction && session ? { session } : {}
-    );
-
-    if (useTransaction && session) {
-      await session.commitTransaction();
-    }
-
-    return newBookingDocs[0];
-  } catch (error) {
-    if (useTransaction && session) {
-      await session.abortTransaction();
-    }
     throw error;
-  } finally {
-    if (session) {
-      session.endSession();
-    }
   }
 };
 
-export const getBookings = async (trainId?: string) => {
-  const query: any = {};
+export const getBookings = async (trainId?: string | number) => {
+  let query = `
+    SELECT b.*, s.seat_number, t.train_number, t.name as train_name
+    FROM bookings b
+    JOIN seats s ON b.seat_id = s.id
+    JOIN trains t ON b.train_id = t.id
+  `;
+  const params: any[] = [];
+
   if (trainId) {
-    query.trainId = trainId;
+    query += ` WHERE b.train_id = $1`;
+    params.push(trainId);
   }
 
-  const bookings = await Booking.find(query)
-    .populate('seatId')
-    .populate('trainId', 'trainNumber name')
-    .sort({ createdAt: -1 });
+  query += ` ORDER BY b.created_at DESC`;
 
-  return bookings;
+  const res = await pool.query(query, params);
+
+  return res.rows.map((b: any) => ({
+    _id: b.id.toString(),
+    trainId: { _id: b.train_id.toString(), trainNumber: b.train_number, name: b.train_name },
+    seatId: { _id: b.seat_id.toString(), seatNumber: b.seat_number },
+    passengerName: b.passenger_name,
+    passengerEmail: b.passenger_email,
+    originStationName: b.origin_station_name,
+    destinationStationName: b.destination_station_name,
+    fromSequence: b.from_sequence,
+    toSequence: b.to_sequence,
+    distanceKm: b.distance_km,
+    fareAmount: b.fare_amount,
+    status: b.status,
+    createdAt: b.created_at,
+  }));
 };

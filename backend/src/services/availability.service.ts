@@ -1,15 +1,12 @@
-import { Train } from '../models/Train';
-import { Coach } from '../models/Coach';
-import { Seat } from '../models/Seat';
-import { Booking } from '../models/Booking';
-import { BookingStatus, CoachClass, ISeatAvailabilityDTO } from '../types';
-import { checkSegmentOverlap, isValidJourneySegment } from '../utils/segment';
+import { pool } from '../config/db';
+import { CoachClass, ISeatAvailabilityDTO } from '../types';
+import { isValidJourneySegment } from '../utils/segment';
 import { calculateDistanceAndFare } from '../utils/fare';
 
 export interface IAvailabilityRequest {
-  trainId: string;
-  originStationId: string;
-  destinationStationId: string;
+  trainId: string | number;
+  originStationId: string | number;
+  destinationStationId: string | number;
 }
 
 export const getSeatAvailability = async ({
@@ -17,17 +14,22 @@ export const getSeatAvailability = async ({
   originStationId,
   destinationStationId,
 }: IAvailabilityRequest) => {
-  // 1. Fetch train and locate origin/destination stations in route
-  const train = await Train.findById(trainId);
-  if (!train) {
+  // 1. Fetch train route
+  const trainRes = await pool.query(`SELECT * FROM trains WHERE id = $1`, [trainId]);
+  if (trainRes.rows.length === 0) {
     throw new Error('Train schedule not found');
   }
 
-  const originRoute = train.stations.find(
-    (st) => st.stationId.toString() === originStationId
+  const train = trainRes.rows[0];
+  const stationsRoute: any[] = typeof train.route_stations === 'string'
+    ? JSON.parse(train.route_stations)
+    : train.route_stations;
+
+  const originRoute = stationsRoute.find(
+    (st: any) => st.stationId.toString() === originStationId.toString()
   );
-  const destRoute = train.stations.find(
-    (st) => st.stationId.toString() === destinationStationId
+  const destRoute = stationsRoute.find(
+    (st: any) => st.stationId.toString() === destinationStationId.toString()
   );
 
   if (!originRoute || !destRoute) {
@@ -43,56 +45,54 @@ export const getSeatAvailability = async ({
     );
   }
 
-  // 2. Query all confirmed bookings on this train that overlap with [fromSequence, toSequence)
-  // Overlap condition in MongoDB query: fromSeq < reqToSeq AND toSeq > reqFromSeq
-  const overlappingBookings = await Booking.find({
-    trainId: train._id,
-    status: BookingStatus.CONFIRMED,
-    $and: [
-      { fromSequence: { $lt: toSequence } },
-      { toSequence: { $gt: fromSequence } },
-    ],
-  });
+  // 2. Query confirmed bookings using PostgreSQL native range overlap operator (&&)
+  const overlapQuery = `
+    SELECT b.*
+    FROM bookings b
+    WHERE b.train_id = $1 
+      AND b.status = 'CONFIRMED'
+      AND int4range(b.from_sequence, b.to_sequence, '[)') && int4range($2, $3, '[)')
+  `;
+  const overlapRes = await pool.query(overlapQuery, [train.id, fromSequence, toSequence]);
 
-  // Map of booked seat ID string -> list of conflicting booking details
   const bookedSeatMap = new Map<string, Array<{ fromStationName: string; toStationName: string; fromSequence: number; toSequence: number }>>();
 
-  for (const b of overlappingBookings) {
-    const sId = b.seatId.toString();
+  for (const b of overlapRes.rows) {
+    const sId = b.seat_id.toString();
     const existing = bookedSeatMap.get(sId) || [];
     existing.push({
-      fromStationName: b.originStationName,
-      toStationName: b.destinationStationName,
-      fromSequence: b.fromSequence,
-      toSequence: b.toSequence,
+      fromStationName: b.origin_station_name,
+      toStationName: b.destination_station_name,
+      fromSequence: b.from_sequence,
+      toSequence: b.to_sequence,
     });
     bookedSeatMap.set(sId, existing);
   }
 
-  // 3. Fetch all coaches and seats
-  const coaches = await Coach.find().sort({ classType: 1 });
-  const seats = await Seat.find().sort({ row: 1, column: 1 });
+  // 3. Query all coaches and seats
+  const coachesRes = await pool.query(`SELECT * FROM coaches ORDER BY class_type ASC`);
+  const seatsRes = await pool.query(`SELECT * FROM seats ORDER BY row_num ASC, col_num ASC`);
 
-  const coachMap = new Map(coaches.map((c) => [c._id.toString(), c]));
+  const coachMap = new Map<string, any>(coachesRes.rows.map((c: any) => [c.id.toString(), c]));
 
   const originKm = originRoute.distanceFromOriginKm || 0;
   const destKm = destRoute.distanceFromOriginKm || 0;
 
   // 4. Construct seat availability DTOs
-  const seatAvailabilityResults: ISeatAvailabilityDTO[] = seats.map((seat) => {
-    const coach = coachMap.get(seat.coachId.toString());
-    const conflicts = bookedSeatMap.get(seat._id.toString());
+  const seatAvailabilityResults: ISeatAvailabilityDTO[] = seatsRes.rows.map((seat: any) => {
+    const coach: any = coachMap.get(seat.coach_id.toString());
+    const conflicts = bookedSeatMap.get(seat.id.toString());
     const isAvailable = !conflicts || conflicts.length === 0;
 
-    const classType = coach ? coach.classType : CoachClass.THIRD;
+    const classType = (coach ? coach.class_type : CoachClass.THIRD) as CoachClass;
     const { distanceKm, fareAmount } = calculateDistanceAndFare(originKm, destKm, classType);
 
     return {
-      seatId: seat._id.toString(),
-      seatNumber: seat.seatNumber,
-      row: seat.row,
-      column: seat.column,
-      coachId: seat.coachId.toString(),
+      seatId: seat.id.toString(),
+      seatNumber: seat.seat_number,
+      row: seat.row_num,
+      column: seat.col_num,
+      coachId: seat.coach_id.toString(),
       coachName: coach ? coach.name : 'Unknown Coach',
       coachClass: classType,
       isAvailable,
@@ -104,8 +104,8 @@ export const getSeatAvailability = async ({
 
   return {
     train: {
-      id: train._id,
-      trainNumber: train.trainNumber,
+      id: train.id.toString(),
+      trainNumber: train.train_number,
       name: train.name,
     },
     journey: {
@@ -115,13 +115,13 @@ export const getSeatAvailability = async ({
       toSequence,
       segmentCount: toSequence - fromSequence,
     },
-    coaches: coaches.map((c) => ({
-      id: c._id.toString(),
+    coaches: coachesRes.rows.map((c: any) => ({
+      id: c.id.toString(),
       name: c.name,
-      classType: c.classType,
-      totalSeats: c.totalSeats,
-      layoutRows: c.layoutRows,
-      layoutCols: c.layoutCols,
+      classType: c.class_type,
+      totalSeats: c.total_seats,
+      layoutRows: c.layout_rows,
+      layoutCols: c.layout_cols,
     })),
     seats: seatAvailabilityResults,
   };
