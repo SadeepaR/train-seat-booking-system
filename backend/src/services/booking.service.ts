@@ -4,6 +4,7 @@ import { Train } from '../models/Train';
 import { Seat } from '../models/Seat';
 import { BookingStatus } from '../types';
 import { isValidJourneySegment } from '../utils/segment';
+import { calculateDistanceAndFare } from '../utils/fare';
 import { BookingConflictError, ValidationError } from '../utils/errors';
 
 export interface ICreateBookingInput {
@@ -104,6 +105,12 @@ export const createBooking = async (input: ICreateBookingInput) => {
       );
     }
 
+    const coachObj: any = seat.coachId;
+    const classType = coachObj && coachObj.classType ? coachObj.classType : 'THIRD';
+    const originKm = originRoute.distanceFromOriginKm || 0;
+    const destKm = destRoute.distanceFromOriginKm || 0;
+    const { distanceKm, fareAmount } = calculateDistanceAndFare(originKm, destKm, classType);
+
     // No overlap found -> Create booking document
     const newBookingDocs = await Booking.create(
       [
@@ -118,6 +125,8 @@ export const createBooking = async (input: ICreateBookingInput) => {
           destinationStationName: destRoute.name,
           fromSequence,
           toSequence,
+          distanceKm,
+          fareAmount,
           status: BookingStatus.CONFIRMED,
         },
       ],

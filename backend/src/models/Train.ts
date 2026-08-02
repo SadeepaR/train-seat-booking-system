@@ -8,6 +8,7 @@ const TrainStationRouteSchema: Schema = new Schema({
   name: { type: String, required: true },
   code: { type: String, required: true },
   sequence: { type: Number, required: true },
+  distanceFromOriginKm: { type: Number, required: true, default: 0 },
   arrivalTime: { type: String },
   departureTime: { type: String },
 });

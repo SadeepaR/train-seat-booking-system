@@ -4,6 +4,7 @@ import { Seat } from '../models/Seat';
 import { Booking } from '../models/Booking';
 import { BookingStatus, CoachClass, ISeatAvailabilityDTO } from '../types';
 import { checkSegmentOverlap, isValidJourneySegment } from '../utils/segment';
+import { calculateDistanceAndFare } from '../utils/fare';
 
 export interface IAvailabilityRequest {
   trainId: string;
@@ -74,11 +75,17 @@ export const getSeatAvailability = async ({
 
   const coachMap = new Map(coaches.map((c) => [c._id.toString(), c]));
 
+  const originKm = originRoute.distanceFromOriginKm || 0;
+  const destKm = destRoute.distanceFromOriginKm || 0;
+
   // 4. Construct seat availability DTOs
   const seatAvailabilityResults: ISeatAvailabilityDTO[] = seats.map((seat) => {
     const coach = coachMap.get(seat.coachId.toString());
     const conflicts = bookedSeatMap.get(seat._id.toString());
     const isAvailable = !conflicts || conflicts.length === 0;
+
+    const classType = coach ? coach.classType : CoachClass.THIRD;
+    const { distanceKm, fareAmount } = calculateDistanceAndFare(originKm, destKm, classType);
 
     return {
       seatId: seat._id.toString(),
@@ -87,8 +94,10 @@ export const getSeatAvailability = async ({
       column: seat.column,
       coachId: seat.coachId.toString(),
       coachName: coach ? coach.name : 'Unknown Coach',
-      coachClass: coach ? coach.classType : CoachClass.THIRD,
+      coachClass: classType,
       isAvailable,
+      distanceKm,
+      fareAmount,
       conflictingSegments: conflicts || [],
     };
   });

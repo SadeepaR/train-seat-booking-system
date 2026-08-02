@@ -15,6 +15,8 @@ const BookingSchema: Schema = new Schema(
     destinationStationName: { type: String, required: true },
     fromSequence: { type: Number, required: true, index: true },
     toSequence: { type: Number, required: true, index: true },
+    distanceKm: { type: Number, required: true, default: 0 },
+    fareAmount: { type: Number, required: true, default: 0 },
     status: {
       type: String,
       enum: Object.values(BookingStatus),

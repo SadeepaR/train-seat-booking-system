@@ -4,6 +4,7 @@ import { getTrains } from '../controllers/train.controller';
 import { checkAvailability } from '../controllers/availability.controller';
 import { handleCreateBooking, handleGetBookings } from '../controllers/booking.controller';
 import { handleSeedDatabase } from '../controllers/seed.controller';
+import { handleGetAdminStats } from '../controllers/admin.controller';
 
 const router = Router();
 
@@ -19,6 +20,9 @@ router.get('/availability', checkAvailability);
 // Booking routes
 router.post('/bookings', handleCreateBooking);
 router.get('/bookings', handleGetBookings);
+
+// Admin Department Stats route
+router.get('/admin/stats', handleGetAdminStats);
 
 // Database Seeding / Reset route
 router.post('/seed', handleSeedDatabase);

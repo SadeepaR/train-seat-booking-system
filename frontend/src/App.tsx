@@ -6,12 +6,15 @@ import { SeatLegend } from './components/SeatLegend';
 import { SeatMap } from './components/SeatMap';
 import { BookingModal } from './components/BookingModal';
 import { BookingList } from './components/BookingList';
+import { AdminDashboard } from './components/AdminDashboard';
 import { ToastBanner, ToastMessage } from './components/ToastBanner';
 import { api } from './services/api';
 import { Station, Train, AvailabilityResponse, SeatAvailability, Booking } from './types';
-import { Train as TrainIcon, Route, AlertCircle } from 'lucide-react';
+import { Route } from 'lucide-react';
 
 export function App() {
+  const [activeView, setActiveView] = useState<'booking' | 'admin'>('booking');
+
   const [stations, setStations] = useState<Station[]>([]);
   const [trains, setTrains] = useState<Train[]>([]);
   const [selectedTrainId, setSelectedTrainId] = useState<string>('');
@@ -182,12 +185,19 @@ export function App() {
   return (
     <div className="min-h-screen pb-16">
       {/* Navbar Header */}
-      <Header onResetDatabase={handleResetDatabase} isResetting={isResettingDB} />
+      <Header
+        onResetDatabase={handleResetDatabase}
+        isResetting={isResettingDB}
+        activeView={activeView}
+        onViewChange={(v) => setActiveView(v)}
+      />
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
-        {/* Loading Spinner */}
-        {isLoadingStations ? (
+        {/* Render View depending on activeView */}
+        {activeView === 'admin' ? (
+          <AdminDashboard />
+        ) : isLoadingStations ? (
           <div className="flex flex-col items-center justify-center py-24 glass-panel rounded-3xl">
             <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-4" />
             <p className="text-slate-300 text-sm font-medium">Connecting to Colombo Fort Railway API...</p>

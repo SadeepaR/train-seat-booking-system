@@ -8,6 +8,7 @@ const StationSchema: Schema = new Schema(
     name: { type: String, required: true, unique: true },
     code: { type: String, required: true, unique: true, uppercase: true },
     sequence: { type: Number, required: true, index: true },
+    distanceFromOriginKm: { type: Number, required: true, default: 0 },
   },
   { timestamps: true }
 );

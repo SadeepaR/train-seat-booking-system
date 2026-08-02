@@ -42,6 +42,12 @@ export const api = {
     return response.data.data;
   },
 
+  // Get department admin analytics & stats
+  getAdminStats: async (): Promise<any> => {
+    const response = await axios.get(`${API_BASE}/admin/stats`);
+    return response.data.data;
+  },
+
   // Seed or Reset database
   seedDatabase: async (): Promise<any> => {
     const response = await axios.post(`${API_BASE}/seed`);

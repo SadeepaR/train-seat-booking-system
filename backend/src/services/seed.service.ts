@@ -13,21 +13,21 @@ export const seedDatabase = async (): Promise<{ message: string; stationsCount: 
   await Coach.deleteMany({});
   await Station.deleteMany({});
 
-  // 1. Seed Colombo Fort - Badulla Main Line Stations
+  // 1. Seed Colombo Fort - Badulla Main Line Stations with actual distances (km)
   const stationData = [
-    { name: 'Colombo Fort', code: 'FOT', sequence: 0 },
-    { name: 'Ragama', code: 'RGM', sequence: 1 },
-    { name: 'Gampaha', code: 'GPH', sequence: 2 },
-    { name: 'Polgahawela', code: 'PLW', sequence: 3 },
-    { name: 'Kurunegala', code: 'KRN', sequence: 4 },
-    { name: 'Peradeniya', code: 'PDA', sequence: 5 },
-    { name: 'Kandy', code: 'KDY', sequence: 6 },
-    { name: 'Nawalapitiya', code: 'NVP', sequence: 7 },
-    { name: 'Hatton', code: 'HTN', sequence: 8 },
-    { name: 'Nanu Oya (Nuwara Eliya)', code: 'NOA', sequence: 9 },
-    { name: 'Pattipola', code: 'PTP', sequence: 10 },
-    { name: 'Ella', code: 'ELA', sequence: 11 },
-    { name: 'Badulla', code: 'BAD', sequence: 12 },
+    { name: 'Colombo Fort', code: 'FOT', sequence: 0, distanceFromOriginKm: 0 },
+    { name: 'Ragama', code: 'RGM', sequence: 1, distanceFromOriginKm: 16 },
+    { name: 'Gampaha', code: 'GPH', sequence: 2, distanceFromOriginKm: 28 },
+    { name: 'Polgahawela', code: 'PLW', sequence: 3, distanceFromOriginKm: 73 },
+    { name: 'Kurunegala', code: 'KRN', sequence: 4, distanceFromOriginKm: 94 },
+    { name: 'Peradeniya', code: 'PDA', sequence: 5, distanceFromOriginKm: 115 },
+    { name: 'Kandy', code: 'KDY', sequence: 6, distanceFromOriginKm: 120 },
+    { name: 'Nawalapitiya', code: 'NVP', sequence: 7, distanceFromOriginKm: 140 },
+    { name: 'Hatton', code: 'HTN', sequence: 8, distanceFromOriginKm: 175 },
+    { name: 'Nanu Oya (Nuwara Eliya)', code: 'NOA', sequence: 9, distanceFromOriginKm: 206 },
+    { name: 'Pattipola', code: 'PTP', sequence: 10, distanceFromOriginKm: 224 },
+    { name: 'Ella', code: 'ELA', sequence: 11, distanceFromOriginKm: 271 },
+    { name: 'Badulla', code: 'BAD', sequence: 12, distanceFromOriginKm: 292 },
   ];
 
   const stations = await Station.insertMany(stationData);
@@ -67,6 +67,7 @@ export const seedDatabase = async (): Promise<{ message: string; stationsCount: 
     name: st.name,
     code: st.code,
     sequence: st.sequence,
+    distanceFromOriginKm: st.distanceFromOriginKm,
     arrivalTime: st.sequence === 0 ? '05:55 AM' : `${6 + Math.floor(st.sequence * 0.7)}:${(st.sequence * 20) % 60}0 AM`,
     departureTime: st.sequence === 12 ? '04:30 PM' : `${6 + Math.floor(st.sequence * 0.7)}:${((st.sequence * 20) % 60) + 5}0 AM`,
   }));

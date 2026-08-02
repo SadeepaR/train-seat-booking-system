@@ -5,6 +5,7 @@ export interface IStation {
   name: string;
   code: string;
   sequence: number;
+  distanceFromOriginKm: number;
 }
 
 export enum CoachClass {
@@ -35,6 +36,7 @@ export interface ITrainStationRoute {
   name: string;
   code: string;
   sequence: number;
+  distanceFromOriginKm: number;
   arrivalTime?: string;
   departureTime?: string;
 }
@@ -63,6 +65,8 @@ export interface IBooking {
   destinationStationName: string;
   fromSequence: number; // Inclusive start index
   toSequence: number;   // Exclusive end index
+  distanceKm: number;
+  fareAmount: number;
   status: BookingStatus;
   createdAt?: Date;
   updatedAt?: Date;
@@ -78,6 +82,8 @@ export interface ISeatAvailabilityDTO {
   coachName: string;
   coachClass: CoachClass;
   isAvailable: boolean;
+  distanceKm: number;
+  fareAmount: number;
   conflictingSegments?: {
     fromStationName: string;
     toStationName: string;

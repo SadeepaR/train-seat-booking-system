@@ -3,6 +3,7 @@ export interface Station {
   name: string;
   code: string;
   sequence: number;
+  distanceFromOriginKm: number;
 }
 
 export interface TrainRouteStation {
@@ -10,6 +11,7 @@ export interface TrainRouteStation {
   name: string;
   code: string;
   sequence: number;
+  distanceFromOriginKm: number;
   arrivalTime?: string;
   departureTime?: string;
 }
@@ -45,6 +47,8 @@ export interface SeatAvailability {
   coachName: string;
   coachClass: CoachClass;
   isAvailable: boolean;
+  distanceKm: number;
+  fareAmount: number;
   conflictingSegments: {
     fromStationName: string;
     toStationName: string;
@@ -80,6 +84,8 @@ export interface Booking {
   destinationStationName: string;
   fromSequence: number;
   toSequence: number;
+  distanceKm: number;
+  fareAmount: number;
   status: 'CONFIRMED' | 'CANCELLED';
   createdAt: string;
 }

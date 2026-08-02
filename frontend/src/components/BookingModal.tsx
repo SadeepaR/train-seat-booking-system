@@ -79,7 +79,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center justify-between text-xs pb-3 border-b border-slate-800">
             <span className="text-slate-400">Carriage & Seat:</span>
             <div className="flex items-center gap-2">
               <span className="bg-blue-500/20 text-blue-300 font-semibold px-2 py-0.5 rounded text-[11px] border border-blue-500/30">
@@ -88,6 +88,18 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               <span className="bg-emerald-500/20 text-emerald-300 font-bold px-2.5 py-0.5 rounded text-xs border border-emerald-500/30">
                 Seat {seat.seatNumber}
               </span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-xs pt-1">
+            <span className="text-slate-400">Distance & Calculated Fare:</span>
+            <div className="text-right">
+              <div className="text-emerald-400 font-extrabold text-sm">
+                LKR {(seat.fareAmount || 0).toLocaleString()}
+              </div>
+              <div className="text-[10px] text-slate-500 font-medium">
+                {seat.distanceKm || Math.abs((destinationStation.distanceFromOriginKm || 0) - (originStation.distanceFromOriginKm || 0))} km travel distance
+              </div>
             </div>
           </div>
         </div>
