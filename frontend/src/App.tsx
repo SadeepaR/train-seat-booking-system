@@ -5,7 +5,6 @@ import { CoachTabs } from './components/CoachTabs';
 import { SeatLegend } from './components/SeatLegend';
 import { SeatMap } from './components/SeatMap';
 import { BookingModal } from './components/BookingModal';
-import { BookingList } from './components/BookingList';
 import { AdminDashboard } from './components/AdminDashboard';
 import { ToastBanner, ToastMessage } from './components/ToastBanner';
 import { api } from './services/api';
@@ -226,9 +225,6 @@ export function App() {
               onSearch={handleSearchAvailability}
               isLoading={isSearchingAvailability}
             />
-
-            {/* Active Bookings Summary */}
-            <BookingList bookings={bookings} />
 
             {/* Seat Map Section */}
             {availability && (
