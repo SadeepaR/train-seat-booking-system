@@ -85,13 +85,17 @@ The backend communicates directly with PostgreSQL using the pg driver instead of
 
 ## Alternatives Considered
 
-**MongoDB vs PostgreSQL:** MongoDB was initially considered for its flexible document model, but it has no mechanism for declarative range overlap prevention. Segment booking in MongoDB would require a two-phase pattern (query for overlaps, then insert) with a race condition window between the two operations, or application-level distributed locking via Redis. PostgreSQL's exclusion constraint solves this in a single atomic operation.
+### MongoDB vs PostgreSQL
 
-**Application-level locking vs database constraint:** `SELECT ... FOR UPDATE` (pessimistic) and version-column retries (optimistic) were considered. Both work but add complexity — pessimistic locking serializes all bookings per seat and risks deadlocks; optimistic locking requires retry loops. The exclusion constraint is simpler and stronger: the conflict check happens within the INSERT itself with no window for race conditions.
+MongoDB was initially considered because of its flexibility and familiarity. However, preventing overlapping bookings safely would require additional application logic and transaction management. PostgreSQL's native support for range-based constraints provided a cleaner, more reliable, and database-driven solution for this reservation system.
 
-**Pre-computed availability matrix vs per-query computation:** Maintaining a `seat_segments` table with one row per seat per segment would make availability lookups trivial but requires updating N rows per booking and keeping the matrix consistent with the bookings table. Per-query computation using the `&&` range overlap operator is simpler, always consistent, and performant thanks to the GiST index already built for the constraint.
+### Application-Level Concurrency vs Database Enforcement
 
-**Fixed-rate vs distance-based fares:** A flat rate per segment would be simpler but unfair — a 16 km journey shouldn't cost the same as 292 km. Distance-based pricing with class multipliers is proportional and aligns with real railway pricing.
+Application-level approaches such as optimistic or pessimistic locking were considered. While both are valid, they introduce additional complexity and require more application code. Delegating concurrency control to PostgreSQL simplifies the implementation while providing strong consistency guarantees.
+
+### Flat Fare vs Distance-Based Fare
+
+A flat fare model would have been simpler to implement but would not fairly reflect the distance travelled. A distance-based pricing model better matches the project requirements and provides a more realistic fare calculation.
 
 ---
 
