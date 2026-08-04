@@ -158,18 +158,17 @@ The core technical challenge is enforcing this non-overlap invariant under concu
 ### Setup
 
 ```bash
-git clone <repository-url>
-cd "Train Seat Booking System"
+git clone https://github.com/SadeepaR/train-seat-booking-system.git
+cd train-seat-booking-system
 docker compose up --build
-```
+``` 
 
-This starts PostgreSQL 16, the Express backend (with automatic schema creation and data seeding), and the Nginx frontend.
+This starts PostgreSQL, the Express backend, and the Nginx frontend.
 
 | Service | URL |
 |---------|-----|
 | Frontend | http://localhost:3000 |
 | Backend API | http://localhost:5001/api |
-| PostgreSQL | localhost:5433 (user: `postgres`, password: `postgres`, db: `train_booking`) |
 
 The database is fully initialized on first boot. Click **"Reset DB"** in the header to re-seed at any time.
 
