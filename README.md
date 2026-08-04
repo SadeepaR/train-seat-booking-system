@@ -121,12 +121,29 @@ The application was designed to run with a single `docker compose up --build` co
 
 ## Extra Credit Features
 
-**Department Admin Dashboard:** Provides a real-time analytics view showing total line revenue (LKR), active booking count, overall occupancy rate (computed as booked segment-units / total segment capacity), segment re-selling efficiency (seats with multiple non-overlapping bookings), per-class occupancy breakdown with progress bars, and the last 10 confirmed tickets.
+### Department Admin Dashboard
 
-**Interactive 2D Seat Map:** A visual carriage rendering where each seat is an interactive button color-coded by status (green = available, blue = selected, red = occupied). Occupied seats display tooltips showing exactly which segments are conflicting, so users can see *why* a seat is unavailable and potentially choose a non-conflicting segment.
+**Problem:** The railway department needs visibility into train utilization and revenue.
 
-**Distance-Based Fare Engine:** Rather than a flat fare, the system computes fares proportional to actual travel distance using cumulative station-to-station distances and carriage class multipliers, with minimum fare floors.
+**Solution:** A real-time dashboard provides key operational metrics including total revenue, active bookings, occupancy rate, seat re-use efficiency, class-wise occupancy, and recent reservations.
 
+**Design:** The dashboard aggregates booking data from the database to provide a simple operational overview without affecting the booking workflow.
+
+### Interactive 2D Seat Map
+
+**Problem:** Passengers need an intuitive way to understand seat availability for their selected journey segment.
+
+**Solution:** The application displays a visual seat map where available, selected, and occupied seats are clearly distinguished using color coding. Occupied seats also display the conflicting journey segments.
+
+**Design:** The seat map is generated dynamically from coach and seat configuration data, allowing different train layouts to be supported without frontend code changes.
+
+### Distance-Based Fare Calculation
+
+**Problem:** A flat fare does not fairly reflect the distance travelled by passengers.
+
+**Solution:** Ticket prices are calculated using the travel distance between the selected stations together with carriage-class pricing rules.
+
+**Design:** Fare calculation is isolated within the backend so that future pricing models, discounts, or promotional rules can be introduced without changing the booking logic.
 ---
 
 ## Running the Project
