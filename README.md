@@ -86,65 +86,65 @@ The core technical challenge is enforcing this non-overlap invariant under concu
 
 ## ⚖️ Alternatives Considered
 
-### MongoDB vs PostgreSQL
+### 1. MongoDB vs PostgreSQL
 
-MongoDB was initially considered because of its flexibility and familiarity. However, preventing overlapping bookings safely would require additional application logic and transaction management. PostgreSQL's native support for range-based constraints provided a cleaner, more reliable, and database-driven solution for this reservation system.
+> MongoDB was initially considered because of its flexibility and familiarity. However, preventing overlapping bookings safely would require additional application logic and transaction management. PostgreSQL's native support for range-based constraints provided a cleaner, more reliable, and database-driven solution for this reservation system.
 
-### Application-Level Concurrency vs Database Enforcement
+### 2. Application-Level Concurrency vs Database Enforcement
 
-Application-level approaches such as optimistic or pessimistic locking were considered. While both are valid, they introduce additional complexity and require more application code. Delegating concurrency control to PostgreSQL simplifies the implementation while providing strong consistency guarantees.
+> Application-level approaches such as optimistic or pessimistic locking were considered. While both are valid, they introduce additional complexity and require more application code. Delegating concurrency control to PostgreSQL simplifies the implementation while providing strong consistency guarantees.
 
-### Flat Fare vs Distance-Based Fare
+### 3. Flat Fare vs Distance-Based Fare
 
-A flat fare model would have been simpler to implement but would not fairly reflect the distance travelled. A distance-based pricing model better matches the project requirements and provides a more realistic fare calculation.
+> A flat fare model would have been simpler to implement but would not fairly reflect the distance travelled. A distance-based pricing model better matches the project requirements and provides a more realistic fare calculation.
 
 ---
 
 ## 🛡️ Challenges Faced
 
-### Preventing Overlapping Reservations
+### 1. Preventing Overlapping Reservations
 
-The primary challenge was allowing multiple passengers to share the same seat across different parts of the journey while ensuring overlapping reservations were never accepted. This was solved by modelling bookings as journey segments and enforcing overlap prevention directly within PostgreSQL.
+> The primary challenge was allowing multiple passengers to share the same seat across different parts of the journey while ensuring overlapping reservations were never accepted. This was solved by modelling bookings as journey segments and enforcing overlap prevention directly within PostgreSQL.
 
-### Implementing Database-Level Constraints
+### 2. Implementing Database-Level Constraints
 
-Configuring PostgreSQL to support overlap detection required enabling the `btree_gist` extension, allowing equality comparisons and range overlap checks to be combined within a single exclusion constraint. Once configured, the database became responsible for guaranteeing booking correctness under concurrent access.
+> Configuring PostgreSQL to support overlap detection required enabling the `btree_gist` extension, allowing equality comparisons and range overlap checks to be combined within a single exclusion constraint. Once configured, the database became responsible for guaranteeing booking correctness under concurrent access.
 
-### Building a Configurable Seat Layout
+### 3. Building a Configurable Seat Layout
 
-Rather than hardcoding stations, coaches, or seat arrangements, the frontend renders the train layout dynamically using configuration data returned by the backend. This makes the system adaptable to future route extensions or train configuration changes without code modifications.
+> Rather than hardcoding stations, coaches, or seat arrangements, the frontend renders the train layout dynamically using configuration data returned by the backend. This makes the system adaptable to future route extensions or train configuration changes without code modifications.
 
-### Docker-Based Deployment
+### 4. Docker-Based Deployment
 
-The application was designed to run with a single `docker compose up --build` command. Configuring networking between the frontend, backend, and PostgreSQL containers required careful Docker configuration to ensure a smooth setup experience.
+> The application was designed to run with a single `docker compose up --build` command. Configuring networking between the frontend, backend, and PostgreSQL containers required careful Docker configuration to ensure a smooth setup experience.
 
 ---
 
 ## 🌟 Extra Credit Features
 
-### Department Admin Dashboard
+### 1. Department Admin Dashboard
 
-**Problem:** The railway department needs visibility into train utilization and revenue.
+> **Problem:** The railway department needs visibility into train utilization and revenue.
+> 
+> **Solution:** A real-time dashboard provides key operational metrics including total revenue, active bookings, occupancy rate, seat re-use efficiency, class-wise occupancy, and recent reservations.
+> 
+> **Design:** The dashboard aggregates booking data from the database to provide a simple operational overview without affecting the booking workflow.
 
-**Solution:** A real-time dashboard provides key operational metrics including total revenue, active bookings, occupancy rate, seat re-use efficiency, class-wise occupancy, and recent reservations.
+### 2. Interactive 2D Seat Map
 
-**Design:** The dashboard aggregates booking data from the database to provide a simple operational overview without affecting the booking workflow.
+> **Problem:** Passengers need an intuitive way to understand seat availability for their selected journey segment.
+> 
+> **Solution:** The application displays a visual seat map where available, selected, and occupied seats are clearly distinguished using color coding. Occupied seats also display the conflicting journey segments.
+> 
+> **Design:** The seat map is generated dynamically from coach and seat configuration data, allowing different train layouts to be supported without frontend code changes.
 
-### Interactive 2D Seat Map
+### 3. Distance-Based Fare Calculation
 
-**Problem:** Passengers need an intuitive way to understand seat availability for their selected journey segment.
-
-**Solution:** The application displays a visual seat map where available, selected, and occupied seats are clearly distinguished using color coding. Occupied seats also display the conflicting journey segments.
-
-**Design:** The seat map is generated dynamically from coach and seat configuration data, allowing different train layouts to be supported without frontend code changes.
-
-### Distance-Based Fare Calculation
-
-**Problem:** A flat fare does not fairly reflect the distance travelled by passengers.
-
-**Solution:** Ticket prices are calculated using the travel distance between the selected stations together with carriage-class pricing rules.
-
-**Design:** Fare calculation is isolated within the backend so that future pricing models, discounts, or promotional rules can be introduced without changing the booking logic.
+> **Problem:** A flat fare does not fairly reflect the distance travelled by passengers.
+> 
+> **Solution:** Ticket prices are calculated using the travel distance between the selected stations together with carriage-class pricing rules.
+> 
+> **Design:** Fare calculation is isolated within the backend so that future pricing models, discounts, or promotional rules can be introduced without changing the booking logic.
 
 ---
 
