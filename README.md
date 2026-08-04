@@ -46,38 +46,40 @@ The core technical challenge is enforcing this non-overlap invariant under concu
 
 ## Core Design Decisions
 
-### Segment Model: Half-Open Integer Ranges
+### Segment-Based Booking Model
 
-Journey legs are modeled as half-open intervals `[from_sequence, to_sequence)` using station sequence numbers. Colombo Fort → Kandy is `[0, 6)`, Kandy → Badulla is `[6, 12)`. Two intervals overlap if and only if `max(A_start, B_start) < min(A_end, B_end)`. The half-open convention ensures contiguous segments (where one ends exactly where the next begins) never conflict — `max(0,6)=6 < min(6,12)=6` is false. This aligns directly with PostgreSQL's `int4range('[)')` syntax and eliminates off-by-one errors.
+The core requirement of this project is allowing a single reserved seat to be booked by multiple passengers as long as their journeys do not overlap. Each booking is represented using the origin and destination station sequence numbers as a half-open interval ([from, to)). This approach allows adjacent journeys—for example, Colombo Fort → Kandy followed by Kandy → Badulla—to reuse the same seat without conflict while correctly rejecting overlapping reservations. It provides a simple and reliable representation of seat occupancy throughout the journey.
 
 ### Database Choice: PostgreSQL 16
 
-PostgreSQL was chosen specifically for its `int4range` data type and `EXCLUDE USING gist` constraint. The booking table declares:
+PostgreSQL was selected because it provides native support for range types and exclusion constraints, making it well suited for implementing segment-based reservations. Instead of manually checking for overlapping bookings in application code, the database guarantees that overlapping reservations for the same seat cannot be created, resulting in a simpler and more reliable design.
+
+The booking table uses an exclusion constraint similar to:
 
 ```sql
 EXCLUDE USING gist (
-  train_id WITH =, seat_id WITH =,
+  train_id WITH =,
+  seat_id WITH =,
   int4range(from_sequence, to_sequence, '[)') WITH &&
-) WHERE (status = 'CONFIRMED')
+)
 ```
-
-This single declarative constraint prevents any two confirmed bookings for the same train and seat from having overlapping ranges. No other mainstream database (MongoDB, MySQL, SQLite) offers native range overlap constraints. Without this, the application would need to implement locking and overlap checks manually.
+This ensures that overlapping bookings for the same seat are rejected atomically by the database, even under concurrent booking attempts.
 
 ### Concurrency Handling: Database-Level Enforcement
 
-Rather than application-level locking (optimistic or pessimistic), all concurrency control is delegated to the exclusion constraint. When two concurrent INSERTs attempt overlapping ranges for the same seat, PostgreSQL atomically rejects one with error code `23P01` (exclusion violation). The backend catches this and returns HTTP 409 Conflict. There are no locks, no retry loops, no version columns — just a constraint the database evaluates on every write. This is impossible to circumvent regardless of race conditions or multiple server instances.
+Concurrency control is delegated to PostgreSQL rather than being implemented in the application. If two users attempt to reserve overlapping journey segments for the same seat simultaneously, the database rejects the conflicting transaction. The backend catches the constraint violation and returns an HTTP 409 Conflict response, ensuring consistent behaviour without implementing custom locking or retry mechanisms.
 
-### Configurable Layout
+### Configurable Train Layout
 
-Stations, coaches, and seats are entirely database-driven. The seed service populates 13 stations with sequence numbers and cumulative distances, 3 coaches with configurable `layout_rows` × `layout_cols`, and dynamically generated seats. Trains store their route as a JSONB array. To change the train configuration, only the seed data needs to change — no application code modifications required. The frontend renders the seat map dynamically based on layout dimensions returned by the API.
+The application is designed to be configuration-driven rather than hardcoded. Stations, coaches, seat layouts, and train information are stored in the database and loaded dynamically through the API. This allows the railway department to modify the route, add new stations, or change the number of coaches and seats without requiring changes to the application code.
 
 ### Fare Calculation
 
-Fares use cumulative station distances and per-class rate multipliers: `fare = max(distance × rate_per_km, minimum_fare)`. Class rates are 1st Class: LKR 12/km (min 300), 2nd Class: LKR 8/km (min 200), 3rd Class: LKR 5/km (min 100). The fare is computed during both availability queries (so the UI displays it before booking) and booking creation (so the stored fare is authoritative).
+Ticket fares are calculated using the distance travelled between the selected stations together with carriage-class pricing rules. This ensures passengers pay only for the portion of the journey they travel, which aligns with the objective of segment-based seat reuse while remaining flexible enough for future pricing models.
 
-### Raw SQL over ORM
+### Direct SQL over ORM
 
-The backend uses the `pg` driver directly with parameterized queries rather than an ORM like Prisma or TypeORM. This gives full control over PostgreSQL-specific features (`int4range`, `EXCLUDE USING gist`, `&&` operator) that most ORMs don't natively support, and avoids abstraction leaks when working with range types.
+The backend communicates directly with PostgreSQL using the pg driver instead of an ORM. This provides full access to PostgreSQL's advanced features, such as range types and exclusion constraints, while keeping the implementation lightweight and giving precise control over database operations.
 
 ---
 
