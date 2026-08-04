@@ -1,4 +1,4 @@
-# Segment-Based Train Seat Booking System
+# 🚆 Segment-Based Train Seat Booking System
 
 A booking system for Sri Lanka's **Colombo Fort – Badulla** railway line that allows a single reserved seat to be booked independently by different passengers for non-overlapping legs of the same journey.
 
@@ -8,9 +8,9 @@ The core technical challenge is enforcing this non-overlap invariant under concu
 
 ---
 
-## Features
+## ✨ Features
 
-### Core Features
+### 🔹 Core Features
 
 - Segment-based seat booking — one seat, multiple non-overlapping passengers
 - Interactive 2D seat map with per-coach carriage layouts (1st, 2nd, 3rd class tabs)
@@ -23,7 +23,7 @@ The core technical challenge is enforcing this non-overlap invariant under concu
 - Journey direction validation (destination must be downstream of origin)
 - One-click database reset and re-seed
 
-### Additional Features
+### 🎁 Additional Features
 
 - Department Admin Dashboard with revenue KPIs, class occupancy breakdown, and recent reservations
 - Dual-view toggle (Passenger View / Department Admin) in the header
@@ -33,7 +33,7 @@ The core technical challenge is enforcing this non-overlap invariant under concu
 
 ---
 
-## Tech Stack
+## ⚙️ Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -44,46 +44,47 @@ The core technical challenge is enforcing this non-overlap invariant under concu
 
 ---
 
-## Core Design Decisions
+## 🎯 Core Design Decisions
 
-### Segment-Based Booking Model
+### 1. Segment-Based Booking Model
 
-The core requirement of this project is allowing a single reserved seat to be booked by multiple passengers as long as their journeys do not overlap. Each booking is represented using the origin and destination station sequence numbers as a half-open interval ([from, to)). This approach allows adjacent journeys—for example, Colombo Fort → Kandy followed by Kandy → Badulla—to reuse the same seat without conflict while correctly rejecting overlapping reservations. It provides a simple and reliable representation of seat occupancy throughout the journey.
+> The core requirement of this project is allowing a single reserved seat to be booked by multiple passengers as long as their journeys do not overlap. Each booking is represented using the origin and destination station sequence numbers as a half-open interval ([from, to)). This approach allows adjacent journeys—for example, Colombo Fort → Kandy followed by Kandy → Badulla—to reuse the same seat without conflict while correctly rejecting overlapping reservations. It provides a simple and reliable representation of seat occupancy throughout the journey.
 
-### Database Choice: PostgreSQL 16
+### 2. Database Choice: PostgreSQL 16
 
-PostgreSQL was selected because it provides native support for range types and exclusion constraints, making it well suited for implementing segment-based reservations. Instead of manually checking for overlapping bookings in application code, the database guarantees that overlapping reservations for the same seat cannot be created, resulting in a simpler and more reliable design.
+> PostgreSQL was selected because it provides native support for range types and exclusion constraints, making it well suited for implementing segment-based reservations. Instead of manually checking for overlapping bookings in application code, the database guarantees that overlapping reservations for the same seat cannot be created, resulting in a simpler and more reliable design.
+> 
+> The booking table uses an exclusion constraint similar to:
+> 
+> ```sql
+> EXCLUDE USING gist (
+>   train_id WITH =,
+>   seat_id WITH =,
+>   int4range(from_sequence, to_sequence, '[)') WITH &&
+> )
+> ```
+> 
+> This ensures that overlapping bookings for the same seat are rejected atomically by the database, even under concurrent booking attempts.
 
-The booking table uses an exclusion constraint similar to:
+### 3. Concurrency Handling: Database-Level Enforcement
 
-```sql
-EXCLUDE USING gist (
-  train_id WITH =,
-  seat_id WITH =,
-  int4range(from_sequence, to_sequence, '[)') WITH &&
-)
-```
-This ensures that overlapping bookings for the same seat are rejected atomically by the database, even under concurrent booking attempts.
+> Concurrency control is delegated to PostgreSQL rather than being implemented in the application. If two users attempt to reserve overlapping journey segments for the same seat simultaneously, the database rejects the conflicting transaction. The backend catches the constraint violation and returns an HTTP 409 Conflict response, ensuring consistent behaviour without implementing custom locking or retry mechanisms.
 
-### Concurrency Handling: Database-Level Enforcement
+### 4. Configurable Train Layout
 
-Concurrency control is delegated to PostgreSQL rather than being implemented in the application. If two users attempt to reserve overlapping journey segments for the same seat simultaneously, the database rejects the conflicting transaction. The backend catches the constraint violation and returns an HTTP 409 Conflict response, ensuring consistent behaviour without implementing custom locking or retry mechanisms.
+> The application is designed to be configuration-driven rather than hardcoded. Stations, coaches, seat layouts, and train information are stored in the database and loaded dynamically through the API. This allows the railway department to modify the route, add new stations, or change the number of coaches and seats without requiring changes to the application code.
 
-### Configurable Train Layout
+### 5. Fare Calculation
 
-The application is designed to be configuration-driven rather than hardcoded. Stations, coaches, seat layouts, and train information are stored in the database and loaded dynamically through the API. This allows the railway department to modify the route, add new stations, or change the number of coaches and seats without requiring changes to the application code.
+> Ticket fares are calculated using the distance travelled between the selected stations together with carriage-class pricing rules. This ensures passengers pay only for the portion of the journey they travel, which aligns with the objective of segment-based seat reuse while remaining flexible enough for future pricing models.
 
-### Fare Calculation
+### 6. Direct SQL over ORM
 
-Ticket fares are calculated using the distance travelled between the selected stations together with carriage-class pricing rules. This ensures passengers pay only for the portion of the journey they travel, which aligns with the objective of segment-based seat reuse while remaining flexible enough for future pricing models.
-
-### Direct SQL over ORM
-
-The backend communicates directly with PostgreSQL using the pg driver instead of an ORM. This provides full access to PostgreSQL's advanced features, such as range types and exclusion constraints, while keeping the implementation lightweight and giving precise control over database operations.
+> The backend communicates directly with PostgreSQL using the pg driver instead of an ORM. This provides full access to PostgreSQL's advanced features, such as range types and exclusion constraints, while keeping the implementation lightweight and giving precise control over database operations.
 
 ---
 
-## Alternatives Considered
+## ⚖️ Alternatives Considered
 
 ### MongoDB vs PostgreSQL
 
@@ -99,7 +100,7 @@ A flat fare model would have been simpler to implement but would not fairly refl
 
 ---
 
-## Challenges Faced
+## 🛡️ Challenges Faced
 
 ### Preventing Overlapping Reservations
 
@@ -119,7 +120,7 @@ The application was designed to run with a single `docker compose up --build` co
 
 ---
 
-## Extra Credit Features
+## 🌟 Extra Credit Features
 
 ### Department Admin Dashboard
 
@@ -147,7 +148,7 @@ The application was designed to run with a single `docker compose up --build` co
 
 ---
 
-## Running the Project
+## 🚀 Running the Project
 
 ### Prerequisites
 
@@ -173,7 +174,7 @@ The database is fully initialized on first boot. Click **"Reset DB"** in the hea
 
 ---
 
-## Future Improvements
+## 🔮 Future Improvements
 
 - User authentication and role-based access control
 - Booking cancellations
@@ -183,7 +184,7 @@ The database is fully initialized on first boot. Click **"Reset DB"** in the hea
 
 ---
 
-## Screenshots
+## 📸 Screenshots
 
 *Screenshots can be captured from the running application:*
 
