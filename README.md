@@ -101,13 +101,21 @@ A flat fare model would have been simpler to implement but would not fairly refl
 
 ## Challenges Faced
 
-**Enabling `btree_gist` in PostgreSQL:** The exclusion constraint combines equality operators on scalar columns (`train_id`, `seat_id`) with the range overlap operator on `int4range`. This requires the `btree_gist` extension, which adds B-tree-compatible operator classes to GiST indexes. The solution was running `CREATE EXTENSION IF NOT EXISTS btree_gist` during schema initialization.
+### Preventing Overlapping Reservations
 
-**Half-open vs closed interval semantics:** With closed intervals `[0, 6]` and `[6, 12]`, contiguous segments would incorrectly overlap at station 6. Half-open intervals `[0, 6)` and `[6, 12)` correctly partition the journey. PostgreSQL's `int4range` supports this with the `'[)'` bounds argument.
+The primary challenge was allowing multiple passengers to share the same seat across different parts of the journey while ensuring overlapping reservations were never accepted. This was solved by modelling bookings as journey segments and enforcing overlap prevention directly within PostgreSQL.
 
-**Docker networking:** The Nginx container must proxy `/api` requests to the backend container using `proxy_pass http://backend:5001/api` (Docker internal hostname), not `localhost`. Additionally, a local PostgreSQL instance on the host conflicted with port 5432, resolved by mapping the container to host port 5433.
+### Implementing Database-Level Constraints
 
-**Rendering configurable seat maps:** Coaches have varying row counts (5, 6, 7) but a fixed 4-column layout. The frontend dynamically groups seats by row, splits each row into left (columns 1–2) and right (columns 3–4) with a central aisle, and renders interactive buttons with availability-dependent styling.
+Configuring PostgreSQL to support overlap detection required enabling the `btree_gist` extension, allowing equality comparisons and range overlap checks to be combined within a single exclusion constraint. Once configured, the database became responsible for guaranteeing booking correctness under concurrent access.
+
+### Building a Configurable Seat Layout
+
+Rather than hardcoding stations, coaches, or seat arrangements, the frontend renders the train layout dynamically using configuration data returned by the backend. This makes the system adaptable to future route extensions or train configuration changes without code modifications.
+
+### Docker-Based Deployment
+
+The application was designed to run with a single `docker compose up --build` command. Configuring networking between the frontend, backend, and PostgreSQL containers required careful Docker configuration to ensure a smooth setup experience.
 
 ---
 
