@@ -8,9 +8,9 @@ The core technical challenge is enforcing this non-overlap invariant under concu
 
 ---
 
-## ✨ Features
+## Features
 
-### 🔹 Core Features
+### Core Features
 
 - Segment-based seat booking - one seat, multiple non-overlapping passengers
 - Interactive 2D seat map with per-coach carriage layouts (1st, 2nd, 3rd class tabs)
@@ -22,7 +22,7 @@ The core technical challenge is enforcing this non-overlap invariant under concu
 - Configurable stations, coaches, and seats (database-driven, not hardcoded)
 - One-click database reset and re-seed
 
-### 🎁 Additional Features
+### Additional Features
 
 - Department Admin Dashboard with revenue KPIs, class occupancy breakdown, and recent reservations
 - Dual-view toggle (Passenger View / Department Admin) in the header
@@ -32,7 +32,7 @@ The core technical challenge is enforcing this non-overlap invariant under concu
 
 ---
 
-## ⚙️ Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -43,7 +43,7 @@ The core technical challenge is enforcing this non-overlap invariant under concu
 
 ---
 
-## 🎯 Core Design Decisions
+## Core Design Decisions
 
 ### 1. Segment-Based Booking Model
 
@@ -85,7 +85,7 @@ The core technical challenge is enforcing this non-overlap invariant under concu
 
 ---
 
-## ⚖️ Alternatives Considered
+## Alternatives Considered
 
 ### 1. MongoDB vs PostgreSQL
 
@@ -101,7 +101,7 @@ The core technical challenge is enforcing this non-overlap invariant under concu
 
 ---
 
-## 🛡️ Challenges Faced
+## Challenges Faced
 
 ### 1. Preventing Overlapping Reservations
 
@@ -121,7 +121,7 @@ The core technical challenge is enforcing this non-overlap invariant under concu
 
 ---
 
-## 🌟 Extra Credit Features
+## Extra Credit Features
 
 ### 1. Department Admin Dashboard
 
@@ -149,7 +149,7 @@ The core technical challenge is enforcing this non-overlap invariant under concu
 
 ---
 
-## 🚀 Running the Project
+## Running the Project
 
 ### Prerequisites
 
@@ -175,7 +175,7 @@ The database is fully initialized on first boot. Click **"Reset DB"** in the hea
 
 ---
 
-## 🔮 Future Improvements
+## Future Improvements
 
 - User authentication and role-based access control
 - Booking cancellations
@@ -185,12 +185,24 @@ The database is fully initialized on first boot. Click **"Reset DB"** in the hea
 
 ---
 
-## 📸 Screenshots
+## UI Snapshots
 
-*Screenshots can be captured from the running application:*
+1. **Passenger View** - Journey selector and interactive seat map
 
-1. **Passenger View** — Journey selector and interactive seat map
-2. **Seat Map** — 2D carriage layout with availability color coding
-3. **Booking Modal** — Fare calculation and passenger details form
-4. **Admin Dashboard** — Revenue KPIs, class occupancy, recent tickets
-5. **Conflict Alert** — Toast notification on overlapping booking attempt (HTTP 409)
+![alt text](image.png)
+
+![alt text](image-1.png)
+
+2. **Seat Map** - 2D carriage layout with availability color coding
+
+![alt text](image-2.png)
+
+![alt text](image-3.png)
+
+3. **Booking Modal** - Fare calculation and passenger details form
+
+![alt text](image-4.png)
+
+4. **Admin Dashboard** - Revenue KPIs, class occupancy, recent tickets
+
+![alt text](image-5.png)
