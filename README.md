@@ -176,10 +176,9 @@ The database is fully initialized on first boot. Click **"Reset DB"** in the hea
 ## Future Improvements
 
 - User authentication and role-based access control
-- Booking cancellation (the `status` column and constraint `WHERE` clause already support this)
+- Booking cancellations
 - Payment gateway integration
 - WebSocket-based live seat map updates
-- Automated tests for fare calculation, segment overlap logic, and concurrent booking scenarios
 - Email booking confirmations
 
 ---
