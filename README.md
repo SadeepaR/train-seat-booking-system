@@ -12,24 +12,23 @@ The core technical challenge is enforcing this non-overlap invariant under concu
 
 ### 🔹 Core Features
 
-- Segment-based seat booking — one seat, multiple non-overlapping passengers
+- Segment-based seat booking - one seat, multiple non-overlapping passengers
 - Interactive 2D seat map with per-coach carriage layouts (1st, 2nd, 3rd class tabs)
-- Real-time segment availability — a seat booked for Colombo → Kandy still shows available for Kandy → Badulla
+- Real-time segment availability - a seat booked for Colombo → Kandy still shows available for Kandy → Badulla
 - Overlap conflict tooltips on occupied seats showing which segments are taken
 - Distance-based fare calculation using real cumulative station distances and class multipliers
-- Database-level concurrency protection via PostgreSQL GiST exclusion constraint
-- HTTP 409 Conflict responses for overlapping booking attempts
+- Database-level concurrency protection
+- Conflict responses for overlapping booking attempts
 - Configurable stations, coaches, and seats (database-driven, not hardcoded)
-- Journey direction validation (destination must be downstream of origin)
 - One-click database reset and re-seed
 
 ### 🎁 Additional Features
 
 - Department Admin Dashboard with revenue KPIs, class occupancy breakdown, and recent reservations
 - Dual-view toggle (Passenger View / Department Admin) in the header
-- Toast notification system for booking confirmations and conflict alerts
-- Two seeded train schedules (Podi Menike, Denuwara Menike)
-- Auto-seed on first boot — `docker compose up` just works with zero configuration
+- Notification system for booking confirmations and conflict alerts
+- Supports multiple train schedules, each with its own unique configuration
+- Auto-seed on first boot - `docker compose up` just works with zero configuration
 
 ---
 
@@ -37,10 +36,10 @@ The core technical challenge is enforcing this non-overlap invariant under concu
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 18, TypeScript, Vite, Tailwind CSS, Axios, Lucide Icons |
-| Backend | Node.js 20, Express 4, TypeScript, pg (node-postgres) |
-| Database | PostgreSQL 16 with `btree_gist` extension |
-| Infrastructure | Docker Compose, Nginx (reverse proxy + static serving) |
+| Frontend | React, TypeScript, Tailwind CSS|
+| Backend | Node.js, Express, TypeScript |
+| Database | PostgreSQL |
+| Infrastructure | Docker Compose |
 
 ---
 
@@ -48,9 +47,11 @@ The core technical challenge is enforcing this non-overlap invariant under concu
 
 ### 1. Segment-Based Booking Model
 
-> The core requirement of this project is allowing a single reserved seat to be booked by multiple passengers as long as their journeys do not overlap. Each booking is represented using the origin and destination station sequence numbers as a half-open interval ([from, to)). This approach allows adjacent journeys—for example, Colombo Fort → Kandy followed by Kandy → Badulla—to reuse the same seat without conflict while correctly rejecting overlapping reservations. It provides a simple and reliable representation of seat occupancy throughout the journey.
+> The core requirement of this project is allowing a single reserved seat to be booked by multiple passengers as long as their journeys do not overlap. Each booking is represented using the origin and destination station sequence numbers as a half-open interval ([from, to)). 
+>
+> This approach allows adjacent journeys - for example, Colombo Fort → Kandy followed by Kandy → Badulla—to reuse the same seat without conflict while correctly rejecting overlapping reservations. It provides a simple and reliable representation of seat occupancy throughout the journey.
 
-### 2. Database Choice: PostgreSQL 16
+### 2. Database Choice: PostgreSQL
 
 > PostgreSQL was selected because it provides native support for range types and exclusion constraints, making it well suited for implementing segment-based reservations. Instead of manually checking for overlapping bookings in application code, the database guarantees that overlapping reservations for the same seat cannot be created, resulting in a simpler and more reliable design.
 > 
