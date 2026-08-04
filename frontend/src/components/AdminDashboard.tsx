@@ -1,17 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import {
-  TrendingUp,
-  DollarSign,
-  Users,
-  PieChart,
-  Repeat,
-  Sparkles,
-  ArrowRight,
-  RefreshCw,
-  Award,
-  Layers,
-} from 'lucide-react';
+import { RefreshCw, ArrowRight } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<any>(null);
@@ -37,148 +26,99 @@ export const AdminDashboard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 glass-panel rounded-3xl">
-        <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-3" />
-        <p className="text-slate-300 text-sm font-medium">Aggregating Department Analytics...</p>
+      <div className="flex flex-col items-center justify-center py-20 glass-panel rounded-2xl">
+        <div className="w-8 h-8 border-3 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-3" />
+        <p className="text-[#a0a7ba] text-xs font-medium">Loading Analytics...</p>
       </div>
     );
   }
 
   if (errorMsg || !stats) {
     return (
-      <div className="glass-panel p-8 text-center rounded-3xl text-rose-300 border border-rose-500/30">
+      <div className="glass-panel p-8 text-center rounded-2xl text-rose-400 border border-[#552323]">
         <p className="text-sm font-medium mb-3">{errorMsg || 'Failed to fetch analytics'}</p>
         <button
           onClick={fetchStats}
-          className="px-4 py-2 rounded-xl bg-rose-500/20 text-rose-200 border border-rose-500/30 text-xs font-semibold hover:bg-rose-500/30"
+          className="px-4 py-2 rounded-xl bg-[#3b1c1c] text-rose-400 border border-[#552323] text-xs font-semibold hover:bg-[#552323]"
         >
-          Retry Loading
+          Retry
         </button>
       </div>
     );
   }
 
-  const { summary, classBreakdown, recentReservations, stationOccupancy } = stats;
+  const { summary, classBreakdown, recentReservations } = stats;
 
   return (
-    <div className="space-y-6 animate-fadeIn">
-      {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel rounded-2xl p-6 border border-slate-800">
-        <div>
-          <div className="flex items-center gap-2 text-blue-400 text-xs font-semibold uppercase tracking-wider mb-1">
-            <Sparkles className="w-4 h-4" />
-            <span>Sri Lanka Railways • Department Insights</span>
-          </div>
-          <h2 className="text-2xl font-extrabold text-white">Colombo Fort – Badulla Line Analytics</h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Real-time revenue performance, segment occupancy, and seat recycling efficiency.
-          </p>
-        </div>
+    <div className="space-y-5 animate-fadeIn">
+      {/* Dashboard Top Row (Title + Refresh) */}
+      <div className="flex items-center justify-between pb-1">
+        <h2 className="text-lg font-bold text-[#f0f2f7]">Department Analytics</h2>
 
         <button
           onClick={fetchStats}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700/80 transition-all self-start md:self-auto"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#313445] hover:bg-[#373a4d] text-[#e8eaef] text-xs font-medium border border-[#3f4359] transition-all"
         >
-          <RefreshCw className="w-3.5 h-3.5 text-blue-400" />
-          <span>Refresh Metrics</span>
+          <RefreshCw className="w-3.5 h-3.5 text-indigo-400" />
+          <span>Refresh</span>
         </button>
       </div>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Total Revenue */}
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 flex items-start justify-between">
-          <div>
-            <span className="text-xs text-slate-400 font-medium">Total Line Revenue</span>
-            <div className="text-2xl font-extrabold text-white mt-1.5 flex items-baseline gap-1">
-              <span className="text-sm text-emerald-400">LKR</span>
-              <span>{summary.totalRevenueLKR.toLocaleString()}</span>
-            </div>
-            <p className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1 font-medium">
-              <TrendingUp className="w-3 h-3" /> Real-time ticket earnings
-            </p>
-          </div>
-          <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-            <DollarSign className="w-5 h-5" />
+        <div className="glass-panel p-4 rounded-xl">
+          <span className="text-xs text-[#a0a7ba] font-medium">Total Line Revenue</span>
+          <div className="text-xl font-extrabold text-[#f0f2f7] mt-1">
+            <span className="text-xs text-emerald-400 font-semibold mr-1">LKR</span>
+            {summary.totalRevenueLKR.toLocaleString()}
           </div>
         </div>
 
         {/* Total Bookings */}
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 flex items-start justify-between">
-          <div>
-            <span className="text-xs text-slate-400 font-medium">Active Bookings</span>
-            <div className="text-2xl font-extrabold text-white mt-1.5">
-              {summary.totalBookings}
-            </div>
-            <p className="text-[11px] text-blue-400 mt-1 flex items-center gap-1 font-medium">
-              <Users className="w-3 h-3" /> Segment passenger tickets
-            </p>
-          </div>
-          <div className="p-3 rounded-2xl bg-blue-500/20 text-blue-400 border border-blue-500/30">
-            <Users className="w-5 h-5" />
+        <div className="glass-panel p-4 rounded-xl">
+          <span className="text-xs text-[#a0a7ba] font-medium">Active Bookings</span>
+          <div className="text-xl font-extrabold text-[#f0f2f7] mt-1">
+            {summary.totalBookings}
           </div>
         </div>
 
         {/* Overall Occupancy Rate */}
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 flex items-start justify-between">
-          <div>
-            <span className="text-xs text-slate-400 font-medium">Overall Occupancy Rate</span>
-            <div className="text-2xl font-extrabold text-white mt-1.5">
-              {summary.overallOccupancyRate}%
-            </div>
-            <p className="text-[11px] text-teal-400 mt-1 flex items-center gap-1 font-medium">
-              <PieChart className="w-3 h-3" /> Segment capacity utilization
-            </p>
-          </div>
-          <div className="p-3 rounded-2xl bg-teal-500/20 text-teal-400 border border-teal-500/30">
-            <PieChart className="w-5 h-5" />
+        <div className="glass-panel p-4 rounded-xl">
+          <span className="text-xs text-[#a0a7ba] font-medium">Overall Occupancy</span>
+          <div className="text-xl font-extrabold text-[#f0f2f7] mt-1">
+            {summary.overallOccupancyRate}%
           </div>
         </div>
 
         {/* Segment Re-Selling Bonus */}
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 flex items-start justify-between">
-          <div>
-            <span className="text-xs text-slate-400 font-medium">Re-Sold Vacated Seats</span>
-            <div className="text-2xl font-extrabold text-amber-300 mt-1.5 flex items-baseline gap-1">
-              <span>{summary.segmentReusedSeatsCount}</span>
-              <span className="text-xs font-normal text-slate-400">seats recycled</span>
-            </div>
-            <p className="text-[11px] text-amber-400 mt-1 flex items-center gap-1 font-medium">
-              <Repeat className="w-3 h-3" /> +LKR {summary.revenueEfficiencyGainedLKR.toLocaleString()} extra revenue
-            </p>
-          </div>
-          <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
-            <Award className="w-5 h-5" />
+        <div className="glass-panel p-4 rounded-xl">
+          <span className="text-xs text-[#a0a7ba] font-medium">Re-Sold Seats</span>
+          <div className="text-xl font-extrabold text-amber-400 mt-1">
+            {summary.segmentReusedSeatsCount} <span className="text-xs font-normal text-[#a0a7ba]">recycled</span>
           </div>
         </div>
       </div>
 
       {/* Class Occupancy Breakdown */}
-      <div className="glass-panel rounded-2xl p-6 border border-slate-800 space-y-4">
-        <div className="flex items-center gap-2 text-sm font-bold text-white">
-          <Layers className="w-4 h-4 text-purple-400" />
-          <span>Occupancy Distribution by Carriage Class</span>
-        </div>
+      <div className="glass-panel rounded-2xl p-4 space-y-3">
+        <h3 className="text-xs font-bold text-[#a0a7ba] uppercase tracking-wider">
+          Class Occupancy
+        </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {classBreakdown.map((item: any) => (
-            <div key={item.classType} className="glass-card rounded-xl p-4 border border-slate-800">
-              <div className="flex items-center justify-between text-xs mb-2">
-                <span className="font-semibold text-slate-200">{item.className}</span>
-                <span className="font-bold text-blue-400">{item.occupancyPercentage}%</span>
+            <div key={item.classType} className="bg-[#272936] rounded-xl p-3 border border-[#373a4d]">
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="font-semibold text-[#e8eaef]">{item.className}</span>
+                <span className="font-bold text-indigo-400">{item.occupancyPercentage}%</span>
               </div>
               
-              {/* Progress bar */}
-              <div className="h-2 w-full bg-slate-900 rounded-full overflow-hidden mb-3">
+              <div className="h-1.5 w-full bg-[#373a4d] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-blue-500 to-teal-400 transition-all duration-500"
+                  className="h-full bg-indigo-500 transition-all duration-500 rounded-full"
                   style={{ width: `${item.occupancyPercentage}%` }}
                 />
-              </div>
-
-              <div className="flex items-center justify-between text-[11px] text-slate-400">
-                <span>Carriage Capacity: {item.totalSeats} Seats</span>
-                <span>{item.bookedSegmentsCount} Leg Units</span>
               </div>
             </div>
           ))}
@@ -186,56 +126,58 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Recent Reservations Table */}
-      <div className="glass-panel rounded-2xl p-5 border border-slate-800 space-y-3">
-        <h3 className="text-sm font-bold text-white flex items-center justify-between">
-          <span>Recent Confirmed Tickets</span>
-          <span className="text-xs text-slate-400 font-normal">Last 10 reservations</span>
-        </h3>
+      <div className="glass-panel rounded-2xl p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-bold text-[#a0a7ba] uppercase tracking-wider">
+            Recent Confirmed Tickets
+          </h3>
+          <span className="text-[11px] text-[#a0a7ba]">Last 10 reservations</span>
+        </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-slate-900/90 text-slate-400 font-semibold border-b border-slate-800">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs text-[#e8eaef]">
+            <thead className="text-[#a0a7ba] font-semibold border-b border-[#3f4359]">
+              <tr>
+                <th className="pb-2 px-2">Seat</th>
+                <th className="pb-2 px-2">Passenger</th>
+                <th className="pb-2 px-2">Journey Route</th>
+                <th className="pb-2 px-2 text-right">Fare</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#373a4d]">
+              {recentReservations.length === 0 ? (
                 <tr>
-                  <th className="py-2.5 px-3">Seat</th>
-                  <th className="py-2.5 px-3">Passenger</th>
-                  <th className="py-2.5 px-3">Journey Route</th>
-                  <th className="py-2.5 px-3 text-right">Fare (LKR)</th>
+                  <td colSpan={4} className="py-6 text-center text-[#a0a7ba]">
+                    No active bookings in the system yet.
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {recentReservations.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="py-6 text-center text-slate-500">
-                      No active bookings in the system yet.
+              ) : (
+                recentReservations.map((res: any) => (
+                  <tr key={res.id} className="hover:bg-[#373a4d]/50 transition-colors">
+                    <td className="py-2 px-2 font-bold text-indigo-400">
+                      {res.seatNumber}
+                    </td>
+                    <td className="py-2 px-2">
+                      <div className="font-semibold text-[#f0f2f7]">{res.passengerName}</div>
+                      <div className="text-[10px] text-[#a0a7ba]">{res.passengerEmail}</div>
+                    </td>
+                    <td className="py-2 px-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-emerald-400">{res.originStationName}</span>
+                        <ArrowRight className="w-3 h-3 text-[#a0a7ba]" />
+                        <span className="text-rose-400">{res.destinationStationName}</span>
+                      </div>
+                    </td>
+                    <td className="py-2 px-2 text-right font-bold text-[#f0f2f7]">
+                      LKR {res.fareAmount.toLocaleString()}
                     </td>
                   </tr>
-                ) : (
-                  recentReservations.map((res: any) => (
-                    <tr key={res.id} className="hover:bg-slate-900/50 transition-colors">
-                      <td className="py-2.5 px-3 font-bold text-emerald-400">
-                        {res.seatNumber}
-                      </td>
-                      <td className="py-2.5 px-3">
-                        <div className="font-semibold text-white">{res.passengerName}</div>
-                        <div className="text-[10px] text-slate-400">{res.passengerEmail}</div>
-                      </td>
-                      <td className="py-2.5 px-3">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-emerald-300">{res.originStationName}</span>
-                          <ArrowRight className="w-3 h-3 text-slate-500" />
-                          <span className="text-rose-300">{res.destinationStationName}</span>
-                        </div>
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-bold text-white">
-                        LKR {res.fareAmount.toLocaleString()}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
+      </div>
     </div>
   );
 };

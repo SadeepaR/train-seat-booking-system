@@ -9,7 +9,6 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { ToastBanner, ToastMessage } from './components/ToastBanner';
 import { api } from './services/api';
 import { Station, Train, AvailabilityResponse, SeatAvailability, Booking } from './types';
-import { Route } from 'lucide-react';
 
 export function App() {
   const [activeView, setActiveView] = useState<'booking' | 'admin'>('booking');
@@ -197,9 +196,9 @@ export function App() {
         {activeView === 'admin' ? (
           <AdminDashboard />
         ) : isLoadingStations ? (
-          <div className="flex flex-col items-center justify-center py-24 glass-panel rounded-3xl">
-            <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-4" />
-            <p className="text-slate-300 text-sm font-medium">Connecting to Colombo Fort Railway API...</p>
+          <div className="flex flex-col items-center justify-center py-24 glass-panel rounded-2xl">
+            <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4" />
+            <p className="text-[#8b949e] text-sm font-medium">Connecting to Colombo Fort Railway API...</p>
           </div>
         ) : (
           <>
@@ -228,33 +227,20 @@ export function App() {
 
             {/* Seat Map Section */}
             {availability && (
-              <div className="space-y-4">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                      <Route className="w-5 h-5 text-blue-400" />
-                      Train Seat Map & Real-Time Availability
-                    </h2>
-                    <p className="text-xs text-slate-400">
-                      Segment: <span className="text-emerald-400 font-semibold">{originStation?.name}</span> to{' '}
-                      <span className="text-rose-400 font-semibold">{destinationStation?.name}</span>
-                    </p>
-                  </div>
-
-                  {/* Seat Legend */}
-                  <SeatLegend />
-                </div>
-
-                {/* Coach Selection Tabs */}
+              <div className="space-y-3">
+                {/* Coach Selection Tabs + Legend */}
                 {availability.coaches.length > 0 && (
-                  <CoachTabs
-                    coaches={availability.coaches}
-                    activeCoachId={activeCoachId}
-                    onSelectCoach={(cId) => {
-                      setActiveCoachId(cId);
-                      setSelectedSeat(null);
-                    }}
-                  />
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <CoachTabs
+                      coaches={availability.coaches}
+                      activeCoachId={activeCoachId}
+                      onSelectCoach={(cId) => {
+                        setActiveCoachId(cId);
+                        setSelectedSeat(null);
+                      }}
+                    />
+                    <SeatLegend />
+                  </div>
                 )}
 
                 {/* Interactive 2D Seat Grid */}
@@ -266,7 +252,7 @@ export function App() {
                     onSelectSeat={(seat) => setSelectedSeat(seat)}
                   />
                 ) : (
-                  <div className="glass-panel p-8 text-center text-slate-400 text-sm rounded-2xl">
+                  <div className="glass-panel p-8 text-center text-[#8b949e] text-sm rounded-2xl">
                     Select a carriage above to inspect the seat map.
                   </div>
                 )}

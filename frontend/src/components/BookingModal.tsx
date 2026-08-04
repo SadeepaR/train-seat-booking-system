@@ -40,65 +40,65 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-      <div className="glass-panel w-full max-w-lg rounded-3xl p-6 relative border border-slate-700/80 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#16171f]/80 backdrop-blur-sm animate-fadeIn">
+      <div className="glass-panel w-full max-w-lg rounded-2xl p-6 relative">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition-all"
+          className="absolute top-4 right-4 p-2 rounded-full bg-[#1e1f2b] hover:bg-[#2a2c3a] text-[#8b949e] hover:text-[#e2e4ea] transition-all"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Modal Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 rounded-2xl bg-blue-500/20 border border-blue-500/30 text-blue-400">
-            <Ticket className="w-6 h-6" />
+        <div className="flex items-center gap-3 mb-5">
+          <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+            <Ticket className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">Confirm Seat Reservation</h2>
-            <p className="text-xs text-slate-400">
-              Segment Journey: {originStation.name} ➔ {destinationStation.name}
+            <h2 className="text-lg font-bold text-[#e2e4ea]">Confirm Seat Reservation</h2>
+            <p className="text-xs text-[#8b949e]">
+              {originStation.name} ➔ {destinationStation.name}
             </p>
           </div>
         </div>
 
         {/* Journey & Seat Summary Card */}
-        <div className="bg-slate-900/80 rounded-2xl p-4 border border-slate-800 mb-6 space-y-3">
-          <div className="flex items-center justify-between text-xs pb-3 border-b border-slate-800">
-            <span className="text-slate-400">Train Schedule:</span>
-            <span className="font-semibold text-white">{train.trainNumber}</span>
+        <div className="bg-[#1e1f2b] rounded-xl p-4 border border-[#33354a] mb-5 space-y-2.5">
+          <div className="flex items-center justify-between text-xs pb-2.5 border-b border-[#33354a]">
+            <span className="text-[#8b949e]">Train:</span>
+            <span className="font-semibold text-[#e2e4ea]">{train.trainNumber}</span>
           </div>
 
-          <div className="flex items-center justify-between text-xs pb-3 border-b border-slate-800">
-            <span className="text-slate-400">Segment Route:</span>
-            <div className="flex items-center gap-1.5 font-semibold text-emerald-400">
+          <div className="flex items-center justify-between text-xs pb-2.5 border-b border-[#33354a]">
+            <span className="text-[#8b949e]">Route:</span>
+            <div className="flex items-center gap-1.5 font-semibold text-[#e2e4ea]">
               <span>{originStation.name}</span>
-              <ArrowRight className="w-3 h-3 text-slate-500" />
+              <ArrowRight className="w-3 h-3 text-[#8b949e]" />
               <span>{destinationStation.name}</span>
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs pb-3 border-b border-slate-800">
-            <span className="text-slate-400">Carriage & Seat:</span>
+          <div className="flex items-center justify-between text-xs pb-2.5 border-b border-[#33354a]">
+            <span className="text-[#8b949e]">Carriage & Seat:</span>
             <div className="flex items-center gap-2">
-              <span className="bg-blue-500/20 text-blue-300 font-semibold px-2 py-0.5 rounded text-[11px] border border-blue-500/30">
+              <span className="bg-indigo-500/10 text-indigo-400 font-semibold px-2 py-0.5 rounded text-[11px] border border-indigo-500/20">
                 {seat.coachName}
               </span>
-              <span className="bg-emerald-500/20 text-emerald-300 font-bold px-2.5 py-0.5 rounded text-xs border border-emerald-500/30">
+              <span className="bg-emerald-500/10 text-emerald-400 font-bold px-2.5 py-0.5 rounded text-xs border border-emerald-500/20">
                 Seat {seat.seatNumber}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs pt-1">
-            <span className="text-slate-400">Distance & Calculated Fare:</span>
+          <div className="flex items-center justify-between text-xs pt-0.5">
+            <span className="text-[#8b949e]">Fare:</span>
             <div className="text-right">
-              <div className="text-emerald-400 font-extrabold text-sm">
+              <div className="text-indigo-400 font-extrabold text-sm">
                 LKR {(seat.fareAmount || 0).toLocaleString()}
               </div>
-              <div className="text-[10px] text-slate-500 font-medium">
-                {seat.distanceKm || Math.abs((destinationStation.distanceFromOriginKm || 0) - (originStation.distanceFromOriginKm || 0))} km travel distance
+              <div className="text-[10px] text-[#8b949e] font-medium">
+                {seat.distanceKm || Math.abs((destinationStation.distanceFromOriginKm || 0) - (originStation.distanceFromOriginKm || 0))} km
               </div>
             </div>
           </div>
@@ -106,17 +106,17 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
         {/* Error alert */}
         {errorMsg && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+          <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {/* Passenger Information Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5 text-blue-400" />
+            <label className="block text-xs font-semibold text-[#8b949e] mb-1.5 flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5 text-indigo-400" />
               Passenger Full Name
             </label>
             <input
@@ -130,8 +130,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-              <Mail className="w-3.5 h-3.5 text-teal-400" />
+            <label className="block text-xs font-semibold text-[#8b949e] mb-1.5 flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5 text-indigo-400" />
               Passenger Email Address
             </label>
             <input
@@ -148,7 +148,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-1/3 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm transition-all"
+              className="w-1/3 py-3 rounded-xl bg-[#2a2c3e] hover:bg-[#33354a] text-[#c9d1d9] font-semibold text-sm transition-all border border-[#3a3d52]"
             >
               Cancel
             </button>
@@ -156,7 +156,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-2/3 py-3 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-500 hover:from-blue-500 hover:to-emerald-400 text-white font-semibold text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all transform active:scale-95 disabled:opacity-50"
+              className="w-2/3 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 transition-all transform active:scale-95 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
