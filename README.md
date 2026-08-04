@@ -144,6 +144,7 @@ The application was designed to run with a single `docker compose up --build` co
 **Solution:** Ticket prices are calculated using the travel distance between the selected stations together with carriage-class pricing rules.
 
 **Design:** Fare calculation is isolated within the backend so that future pricing models, discounts, or promotional rules can be introduced without changing the booking logic.
+
 ---
 
 ## Running the Project
