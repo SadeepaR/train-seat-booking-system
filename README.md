@@ -168,7 +168,6 @@ This starts PostgreSQL, the Express backend, and the Nginx frontend.
 | Service | URL |
 |---------|-----|
 | Frontend | http://localhost:3000 |
-| Backend API | http://localhost:5001/api |
 
 The database is fully initialized on first boot. Click **"Reset DB"** in the header to re-seed at any time.
 
